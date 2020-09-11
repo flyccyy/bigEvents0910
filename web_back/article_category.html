@@ -72,7 +72,8 @@
         <tfoot>
           <tr>
             <td colspan="3" class="text-center">
-              <a href="#" class="btn btn-success" data-toggle="modal" data-target="#addModal">新增分类</a>
+              <a href="javascript:;" class="btn btn-success add-category">新增分类</a>
+              <!-- <a href="#" class="btn btn-success" data-toggle="modal" data-target="#addModal">新增分类</a> -->
             </td>
           </tr>
         </tfoot>
@@ -108,6 +109,7 @@
   </div>
 
   <script>
+    let tempObj = {};
     /**
     * @description: 获取所有文章类别
     * @param {type} 
@@ -124,36 +126,12 @@
                 + '<td>' + res.data[i].name + '</td>'
                 + '<td>' + res.data[i].slug + '</td>'
                 + '<td class="text-center">'
-                + '<a href="javascript:;" class="btn btn-info btn-xs" style="margin-right:5px;">编辑</a>'
-                + '<a href="javascript:;" class="btn btn-danger btn-xs" data-id="' + res.data[i].id + '" onclick="deleteCategory('+res.data[i].id+')">删除</a>'
+                + '<a href="javascript:;" class="btn btn-info btn-xs" style="margin-right:5px;"  data-id="' + res.data[i].id + '">编辑</a>'
+                + '<a href="javascript:;" class="btn btn-danger btn-xs" data-id="' + res.data[i].id + '" onclick="deleteCategory(' + res.data[i].id + ')">删除</a>'
                 + '</td>'
                 + '</tr>'
             }
             $('tbody').html(resStr);
-          }
-        }
-      })
-    }
-    /**
-     * @description: 新增文章分类
-     * @param {string} name:类别名称
-     * @param {string} slug:别名
-     * @return {string}  msg:文字信息
-     */
-    function addCategory() {
-      let name = $('#recipient-name').val();
-      let slug = $('#message-text').val();
-      $.ajax({
-        type: 'post',
-        url: 'http://localhost:8080/admin/category/add',
-        data: {
-          name,
-          slug
-        },
-        success: function (res) {
-          if(res.code == 201) {
-            alert('新增成功');
-            getCategory();
           }
         }
       })
@@ -165,45 +143,145 @@
      */
     function deleteCategory(id) {
       $.ajax({
-        type:'post',
-        url:'http://localhost:8080/admin/category/delete',
-        data:{
+        type: 'post',
+        url: 'http://localhost:8080/admin/category/delete',
+        data: {
           id
         },
-        success:function(res){
-          if(res.code == 204) {
+        success: function (res) {
+          if (res.code == 204) {
             alert(res.msg);
             getCategory();
           }
         }
       })
     }
+    /**
+     * @description: 根据id查询文章类别
+     * @param {type} id:文章id
+     * @return {type} 
+     */
+    function getCategoryById(id) {
+      $.ajax({
+        url: 'http://localhost:8080/admin/category/search',
+        data: {
+          id
+        },
+        success: function (res) {
+          if (res.code == 200) {
+            $('#recipient-name').val(res.data[0].name);
+            $('#message-text').val(res.data[0].slug);
+            tempObj = {
+              name: res.data[0].name,
+              slug: res.data[0].slug
+            }
+            console.log(tempObj);
+          }
+        }
+      })
+    }
+    /**
+     * @description: 编辑文章类别
+     * @param {type} 
+     * @return {type} 
+     */
+    function editCategory(id, name, slug) {
+      $.ajax({
+        type: 'post',
+        url: 'http://localhost:8080/admin/category/edit',
+        data: {
+          id,
+          name,
+          slug
+        },
+        success: function (res) {
+          if (res.code == 200) {
+            alert('修改成功');
+            getCategory();
+            $('#addModal').modal('hide');
+          }
+        }
+      })
+    }
     $(function () {
       getCategory();
-    })
-    $('#addModal').modal({
-      show: false,
-      backdrop: false
-    });
-
-    $('#model_shutoff').click(function () {
-      $('#addModal').modal('hide');
-    });
-
-    $('#model_add').click(function () {
-      addCategory();
-      $('#recipient-name').val('');
-      $('#message-text').val('');
-      $('#addModal').modal('hide');
-
-    });
-
-    $('.category_table').delegate('a', 'click', function () {
-      if ($(this).hasClass('btn-info')) {
-        $('#addModal .modal-title').html('修改分类名称');
+      //新增分类按钮
+      $('.add-category').click(function () {
+        $('#recipient-name').val('');
+        $('#message-text').val('');
+        $('#model_add').text('新增');
+        $('#addModal .modal-title').html('新增分类');
         $('#addModal').modal('show');
-      }
-    })      
+      })
+
+      let id = 0;  //最好不用全局变量，把它也用一个input存，然后隐藏input
+      //模态框的新增和编辑按钮
+      $('#model_add').click(function () {
+        if ($('#model_add').text().indexOf('新增') != -1) {
+          let name = $('#recipient-name').val().trim();
+          let slug = $('#message-text').val().trim();
+          if (!name || !slug) {
+            alert('类别名称和别名不能为空');
+            return;
+          }
+          $.ajax({
+            type: 'post',
+            url: 'http://localhost:8080/admin/category/add',
+            data: {
+              name,
+              slug
+            },
+            success: function (res) {
+              if (res.code == 201) {
+                alert('新增成功');
+                getCategory();
+
+                $('#addModal').modal('hide');
+              }
+            }
+          })
+
+        } else {
+          let name = $('#recipient-name').val();
+          let slug = $('#message-text').val();
+          if (name == tempObj.name && slug == tempObj.slug) {
+            alert('未修改');
+            return;
+          }
+          if (!name || !slug) {
+            alert('类别名称和别名不能为空');
+            return;
+          }
+          editCategory(id, name, slug);
+
+        }
+
+
+      });
+      //编辑按钮事件
+      $('.category_table').delegate('a', 'click', function () {
+        if ($(this).hasClass('btn-info')) {
+          id = $(this).data('id');
+          getCategoryById(id);
+          $('#addModal .modal-title').html('修改分类名称');
+          $('#model_add').text('编辑');
+          $('#addModal').modal('show');
+        }
+
+      })
+      $('#addModal').modal({
+        show: false,
+        backdrop: false
+      });
+
+      $('#model_shutoff').click(function () {
+        $('#addModal').modal('hide');
+      });
+
+    })
+
+
+
   </script>
 
 </body>
