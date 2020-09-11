@@ -156,7 +156,6 @@
             type: 'post',
             url: 'http://localhost:8080/admin/user/logout',
             success: function (res) {
-              console.log(res);
               if (res.code == 200) {
                 location.href = './login.html';
               }
