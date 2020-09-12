@@ -135,6 +135,11 @@
   </script>
   <script src="./js/bootstrap/js/bootstrap.min.js"></script>
   <script>
+    /**
+     * @description: 获取用户信息
+     * @param {type} 
+     * @return {type} 
+     */
     function getUserInfo() {
       $.ajax({
         url: 'http://localhost:8080/admin/user/info',
@@ -147,6 +152,7 @@
         }
       })
     }
+   
     $(function () {
       getUserInfo();
       $('.icon-tuichu').parent().click(function () {

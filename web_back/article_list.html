@@ -348,8 +348,6 @@
         });
       }, 10)
 
-
-
       //筛选按钮
       $('#btnSearch').click(function (e) {
         e = e || window.event;
@@ -358,6 +356,21 @@
 
         let state = $('#selStatus').val();
         getArticles('', type, state);
+      })
+
+      //删除 接口错误
+      $('tbody').on('click', 'a.btn-danger', function () {
+        let id = $(this).data('id');
+        $.ajax({
+          type:'post',
+          url:'http://localhost:8080/admin/article/delete',
+          data:{
+            id
+          },
+          success:res=>{
+            console.log(res);
+          }
+        })
       })
 
       // 设置左侧菜单
