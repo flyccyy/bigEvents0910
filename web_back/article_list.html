@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/iconfont.css">
   <link rel="stylesheet" href="css/main.css">
   <script src="js/jquery-1.12.4.min.js"></script>
+  <script src="./js/jquery.twbsPagination.js"></script>
 </head>
 
 <body>
@@ -30,9 +31,9 @@
               <option>爱旅行</option>
             </select>
             <select id="selStatus" name="" class="form-control input-sm">
-              <option>所有状态</option>
-              <option value="drafted">草稿</option>
-              <option value="published">已发布</option>
+              <option value="">所有状态</option>
+              <option>草稿</option>
+              <option>已发布</option>
             </select>
             <button id="btnSearch" class="btn btn-default btn-sm">筛选</button>
           </form>
@@ -269,9 +270,103 @@
   </div>
 
   <script>
-    // 设置左侧菜单
-    $('#release_btn').click(function () {
-      window.parent.setMenu(1, 1);
+
+    /**
+     * @description: 获取所有的分类
+     * @param {type} 
+     * @return {type} 
+     */
+    function getCategory() {
+      $.ajax({
+        url: 'http://localhost:8080/admin/category/list',
+        success: res => {
+          // console.log(res);
+          let selStr = '<option value="">所有分类</option>'
+          if (res.code == 200) {
+            for (let i = 0; i < res.data.length; i++) {
+              selStr += '<option value="' + res.data[i].id + '">' + res.data[i].name + '</option>'
+            }
+            $('#selCategory').html(selStr);
+          }
+        }
+      })
+    }
+    /**
+     * @description: 文章搜索
+     * @param {type} 
+     * @return {type} 
+     */
+    //总页数：
+    // let totalPage = 10;
+    function getArticles(key = '', type = '', state = '', page = '', perpage = '') {
+      $.ajax({
+        url: 'http://localhost:8080/admin/article/query',
+        data: {
+          key,
+          type,
+          state,
+          page,
+          perpage
+        },
+        success: function (res) {
+          let resStr = '';
+          // console.log(res);
+          // totalPage = res.data.totalPage;
+          if (res.code == 200) {
+
+            for (let i = 0; i < res.data.data.length; i++) {
+              resStr += '<tr>'
+                + '<td>' + res.data.data[i].title + '</td>'
+                + '<td>' + res.data.data[i].author + '</td>'
+                + '<td>' + res.data.data[i].category + '</td>'
+                + '<td class="text-center">' + res.data.data[i].date + '</td>'
+                + '<td class="text-center">' + res.data.data[i].state + '</td>'
+                + '<td class="text-center">'
+                + '<a href="./article_edit.html?id=' + res.data.data[i].id + '&state=' + res.data.data[i].state + '" class="btn btn-default btn-xs" data-id="' + res.data.data[i].id + '">编辑</a>'
+                + '<a href="javascript:;" class="btn btn-danger btn-xs" data-id="' + res.data.data[i].id + '">删除</a>'
+                + '</td>'
+                + '</tr>'
+            }
+            $('tbody').html(resStr);
+
+          }
+        }
+      })
+    }
+    $(function () {
+      getCategory();
+      //分页未完成，主要是插件的使用问题，还剩总页数渲染没弄
+      setTimeout(() => {  //时机问题，
+        $('.pagination').twbsPagination({
+          totalPages: 35,
+          visiblePages: 7,
+          onPageClick: function (event, page) {
+            let type = $('#selCategory').val();
+            let state = $('#selStatus').val();
+            getArticles('', type, state, page);
+          }
+        });
+      }, 10)
+
+
+
+      //筛选按钮
+      $('#btnSearch').click(function (e) {
+        e = e || window.event;
+        e.preventDefault();
+        let type = $('#selCategory').val();
+
+        let state = $('#selStatus').val();
+        getArticles('', type, state);
+      })
+
+      // 设置左侧菜单
+      $('#release_btn').click(function () {
+        window.parent.setMenu(1, 1);
+      })
+
+
+
     })
   </script>
 
